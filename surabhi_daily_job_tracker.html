@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surabhi – 15-Day Job Search Tracker</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;font-size:14px;line-height:1.5;}
+  a{color:#2563eb;text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* Layout */
+  .shell{max-width:1100px;margin:0 auto;padding:24px 16px;}
+
+  /* Header */
+  .top-bar{background:#fff;border:0.5px solid #e2e0d8;border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .top-bar h1{font-size:18px;font-weight:600;color:#111;}
+  .top-bar p{font-size:12px;color:#777;margin-top:3px;}
+  .countdown-ring{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .day-num{font-size:40px;font-weight:700;color:#111;line-height:1;}
+  .day-label{font-size:11px;color:#777;line-height:1.4;}
+  .day-label strong{display:block;font-size:13px;color:#111;}
+
+  /* Progress bar */
+  .progress-wrap{background:#fff;border:0.5px solid #e2e0d8;border-radius:12px;padding:16px 24px;margin-bottom:16px;}
+  .progress-label{display:flex;justify-content:space-between;font-size:12px;color:#777;margin-bottom:8px;}
+  .progress-track{background:#f0ede8;border-radius:99px;height:8px;}
+  .progress-fill{background:#2563eb;border-radius:99px;height:8px;transition:width 0.4s;}
+  .day-dots{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .dot{width:28px;height:28px;border-radius:50%;border:1.5px solid #e2e0d8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#aaa;cursor:pointer;transition:all 0.15s;}
+  .dot.today{border-color:#2563eb;color:#2563eb;font-weight:700;}
+  .dot.done{background:#dcfce7;border-color:#16a34a;color:#16a34a;}
+  .dot.active{background:#2563eb;color:#fff;border-color:#2563eb;}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+  .stat{background:#fff;border:0.5px solid #e2e0d8;border-radius:10px;padding:12px 14px;}
+  .stat-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .stat-val{font-size:24px;font-weight:600;color:#111;}
+  .stat-val.green{color:#16a34a;}
+  .stat-val.blue{color:#2563eb;}
+  .stat-val.amber{color:#b45309;}
+  .stat-val.red{color:#dc2626;}
+
+  /* Tabs */
+  .tab-row{display:flex;gap:0;border-bottom:1px solid #e2e0d8;margin-bottom:16px;overflow-x:auto;}
+  .tab{font-size:13px;padding:8px 18px;cursor:pointer;color:#777;border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;}
+  .tab.on{color:#111;border-bottom-color:#111;font-weight:500;}
+
+  /* Job cards */
+  .job-card{background:#fff;border:0.5px solid #e2e0d8;border-radius:10px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;}
+  .job-card:hover{border-color:#b0aaa0;}
+  .job-num{font-size:11px;color:#aaa;font-weight:500;padding-top:2px;min-width:20px;}
+  .job-main{}
+  .job-title{font-size:14px;font-weight:600;color:#111;margin-bottom:2px;}
+  .job-co{font-size:12px;color:#555;margin-bottom:6px;}
+  .job-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .pill{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500;}
+  .pill-match-h{background:#dcfce7;color:#166534;}
+  .pill-match-m{background:#fef9c3;color:#854d0e;}
+  .pill-remote{background:#ede9fe;color:#5b21b6;}
+  .pill-blr{background:#e0f2fe;color:#075985;}
+  .pill-src{background:#f1f0ec;color:#555;}
+  .pill-fresh{background:#fce7f3;color:#9d174d;}
+  .job-why{font-size:11px;color:#777;line-height:1.5;margin-bottom:8px;}
+  .job-skills{display:flex;gap:4px;flex-wrap:wrap;}
+  .skill{font-size:10px;padding:2px 7px;border-radius:6px;background:#f5f4f0;color:#555;}
+  .job-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;min-width:130px;}
+  .btn-apply{font-size:12px;padding:6px 14px;border-radius:8px;background:#111;color:#fff;border:none;cursor:pointer;text-decoration:none;display:inline-block;text-align:center;white-space:nowrap;}
+  .btn-apply:hover{background:#333;color:#fff;}
+  select.status{font-size:11px;padding:5px 8px;border-radius:8px;border:0.5px solid #e2e0d8;background:#fff;color:#111;cursor:pointer;width:130px;}
+  .note-wrap{width:100%;margin-top:4px;}
+  .note-inp{font-size:11px;padding:4px 8px;border-radius:6px;border:0.5px solid #e2e0d8;background:#f9f8f6;color:#111;width:100%;}
+  .date-posted{font-size:10px;color:#aaa;margin-top:4px;text-align:right;}
+
+  /* Day header */
+  .day-header{background:#111;color:#fff;border-radius:10px;padding:12px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+  .day-header h2{font-size:15px;font-weight:600;}
+  .day-header span{font-size:12px;color:#aaa;}
+
+  /* Instructions */
+  .instruction-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:12px;color:#1e40af;line-height:1.7;}
+  .instruction-box strong{display:block;font-size:13px;margin-bottom:4px;}
+
+  /* Empty state */
+  .empty{text-align:center;padding:40px;color:#aaa;font-size:13px;}
+
+  /* Footer */
+  .footer{text-align:center;font-size:11px;color:#aaa;padding:24px 0 8px;border-top:0.5px solid #e2e0d8;margin-top:24px;}
+
+  @media(max-width:600px){
+    .stats{grid-template-columns:repeat(3,1fr);}
+    .job-card{grid-template-columns:1fr;gap:8px;}
+    .job-actions{flex-direction:row;flex-wrap:wrap;align-items:center;}
+    select.status{width:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div>
+      <h1>🎯 Surabhi's 15-Day Job Search Tracker</h1>
+      <p>Senior PM / Technical PM · Fintech · B2B SaaS · B2C SaaS · Bengaluru &amp; Remote · ₹25–40L</p>
+      <p style="margin-top:6px;font-size:12px;color:#555;">Start date: <strong id="start-date-lbl"></strong> &nbsp;|&nbsp; Target: <strong id="end-date-lbl"></strong></p>
+    </div>
+    <div class="countdown-ring">
+      <div>
+        <div class="day-num" id="days-left">–</div>
+        <div class="day-label">days<br><strong>remaining</strong></div>
+      </div>
+      <div>
+        <div class="day-num" id="current-day" style="color:#2563eb;">–</div>
+        <div class="day-label">today<br><strong>Day <span id="today-day-num">–</span></strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>15-day sprint progress</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-bar" style="width:0%"></div></div>
+    <div class="day-dots" id="day-dots"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Total jobs found</div><div class="stat-val" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-lbl">Applied</div><div class="stat-val green" id="s-applied">0</div></div>
+    <div class="stat"><div class="stat-lbl">Interviewing</div><div class="stat-val blue" id="s-int">0</div></div>
+    <div class="stat"><div class="stat-lbl">Offer / Final</div><div class="stat-val amber" id="s-offer">0</div></div>
+    <div class="stat"><div class="stat-lbl">Skipped</div><div class="stat-val red" id="s-skip">0</div></div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instruction-box">
+    <strong>📌 How to use this tracker every day</strong>
+    Open this file each morning → Come back to Claude chat → Type <em>"Run Day [N] job search"</em> → Claude will find 10–15 fresh verified jobs and give you updated job data to paste below. Change status dropdowns as you apply. Notes auto-save. <strong>Goal: Apply to at least 5–8 jobs per day.</strong>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-row">
+    <button class="tab on" onclick="switchTab('all',this)">All Jobs (<span id="cnt-all">0</span>)</button>
+    <button class="tab" onclick="switchTab('todo',this)">To Apply (<span id="cnt-todo">0</span>)</button>
+    <button class="tab" onclick="switchTab('Applied',this)">Applied (<span id="cnt-applied">0</span>)</button>
+    <button class="tab" onclick="switchTab('Interviewing',this)">Interviewing (<span id="cnt-int">0</span>)</button>
+    <button class="tab" onclick="switchTab('Offer',this)">Offer / Final (<span id="cnt-offer">0</span>)</button>
+    <button class="tab" onclick="switchTab('Skipped',this)">Skipped (<span id="cnt-skip">0</span>)</button>
+  </div>
+
+  <!-- Job list -->
+  <div id="job-list"></div>
+
+  <div class="footer">Built for Surabhi Tripathi · 15-day sprint · Start date: May 1, 2026 · All links go directly to company ATS</div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const START_DATE = new Date('2026-05-01');
+const TOTAL_DAYS = 15;
+
+// ── JOB DATA ────────────────────────────────────────────
+// Each job: {id, day, title, company, type, loc, match, src, link, why, skills, posted}
+const JOBS = [
+  // ── DAY 1 – May 1 2026 ──────────────────────────────
+  {
+    id:'d1_1', day:1,
+    title:'Senior PM – UPI (Consumer Fintech)',
+    company:'Paytm',
+    type:'fintech', loc:'blr',
+    match:'h', src:'Lever',
+    link:'https://jobs.lever.co/paytm/64241793-684f-4dde-9447-36a14e499d4e',
+    why:'UPI at massive scale. Your Cashfree risk + consumer payments experience maps directly. Posted 3 weeks ago – still active.',
+    skills:['UPI','Consumer fintech','SQL','Mixpanel','Funnel analysis'],
+    posted:'~3 weeks ago'
+  },
+  {
+    id:'d1_2', day:1,
+    title:'Senior PM – Risk Product',
+    company:'Paytm',
+    type:'fintech', loc:'blr',
+    match:'h', src:'Lever',
+    link:'https://jobs.lever.co/paytm/4afe02ff-96b0-4cfd-b012-e24fcc37ae48',
+    why:'Microservices-based risk platform. Direct parallel to your Cashfree AI risk intelligence work. Strong match on KPIs.',
+    skills:['Risk platform','Microservices','Fraud','Compliance','Fintech'],
+    posted:'~3 weeks ago'
+  },
+  {
+    id:'d1_3', day:1,
+    title:'Senior Product Manager (Core Platform)',
+    company:'Razorpay',
+    type:'fintech', loc:'blr',
+    match:'h', src:'Greenhouse',
+    link:'https://job-boards.greenhouse.io/razorpaysoftwareprivatelimited/jobs/4612044005',
+    why:'Payments neobank platform PM. Your merchant risk + API-first experience at Cashfree is an exact match here.',
+    skills:['Payments','Neobank','B2B','APIs','Merchant success'],
+    posted:'Active – recent'
+  },
+  {
+    id:'d1_4', day:1,
+    title:'Senior PM – Growth',
+    company:'Razorpay',
+    type:'fintech', loc:'blr',
+    match:'h', src:'Greenhouse',
+    link:'https://job-boards.greenhouse.io/razorpaysoftwareprivatelimited/jobs/4580259005',
+    why:'PLG + growth levers (acquisition, retention, monetisation). Your 30% merchant churn reduction at Cashfree is a standout achievement for this role.',
+    skills:['Growth PM','PLG','Retention','Monetisation','Analytics'],
+    posted:'~Jun 2025 – still active'
+  },
+  {
+    id:'d1_5', day:1,
+    title:'Senior PM – AI Growth (Remote)',
+    company:'HighLevel',
+    type:'saas', loc:'remote',
+    match:'h', src:'Lever',
+    link:'https://jobs.lever.co/gohighlevel/469e3adf-43ac-42ba-a9b2-722e3cd150ca',
+    why:'AI platform 0-to-1 PM. Your multi-tenant SaaS + AI analytics at Retisio and Paramount is a direct fit. Fully remote, India-friendly.',
+    skills:['AI/ML','SaaS','0-to-1','Growth loops','B2B SaaS'],
+    posted:'~Mar 2026 – active'
+  },
+  {
+    id:'d1_6', day:1,
+    title:'Sr PM – AI Platform (Remote)',
+    company:'HighLevel',
+    type:'saas', loc:'remote',
+    match:'h', src:'Lever',
+    link:'https://jobs.lever.co/gohighlevel/377b5e0d-c6f7-4635-bbb5-c6ac0971b351',
+    why:'LLM orchestration + agent frameworks + technical platform PM. Your API-first, microservices background from Retisio/Paramount is ideal.',
+    skills:['LLM','Agent frameworks','Technical PM','API','Platform'],
+    posted:'~Mar 2026 – active'
+  },
+  {
+    id:'d1_7', day:1,
+    title:'Sr PM – Mobile Payments (Remote)',
+    company:'HighLevel',
+    type:'fintech', loc:'remote',
+    match:'h', src:'Lever',
+    link:'https://jobs.lever.co/gohighlevel/52228a1b-a999-4916-910a-5c949a19f263',
+    why:'Mobile payments lifecycle – invoicing, POS, compliance, B2B2C fintech. Combines your Cashfree + SaaS experience uniquely.',
+    skills:['Mobile payments','POS','Compliance','B2B2C','Fintech'],
+    posted:'~Jan 2026 – active'
+  },
+  {
+    id:'d1_8', day:1,
+    title:'Staff PM – Wallet & Payments Infrastructure (Remote)',
+    company:'HighLevel',
+    type:'fintech', loc:'remote',
+    match:'m', src:'Lever',
+    link:'https://jobs.lever.co/gohighlevel/04400b2a-7386-4f26-9037-6576b16f1235',
+    why:'Payments infrastructure, Stripe ecosystem, multi-currency. Stretch role – apply if you want to level up to Staff PM.',
+    skills:['Payments infra','Stripe','Billing','Reconciliation','Multi-currency'],
+    posted:'Active'
+  },
+  {
+    id:'d1_9', day:1,
+    title:'Senior PM – Fintech (Private Markets)',
+    company:'Bunch',
+    type:'fintech', loc:'remote',
+    match:'h', src:'Ashby',
+    link:'https://jobs.ashbyhq.com/bunch/a4a662e0-30d5-47b4-b8f6-6f542936ce61',
+    why:'Fintech B2B SaaS, compliance workflows, fund operations. Remote-first, posted 2 weeks ago – apply immediately.',
+    skills:['Fintech','B2B SaaS','Compliance','Roadmap','Private markets'],
+    posted:'2 weeks ago 🔥'
+  },
+  {
+    id:'d1_10', day:1,
+    title:'Senior PM – Risk Domain',
+    company:'PPRO (Payments Infrastructure)',
+    type:'fintech', loc:'remote',
+    match:'h', src:'Lever',
+    link:'https://jobs.lever.co/ppro/c357015a-e368-4a6b-800a-82cb9b559ce7',
+    why:'Fraud, KYC, AML, compliance – mirrors your Cashfree risk intelligence platform almost exactly. Global payments infra. Posted 3 weeks ago.',
+    skills:['Risk','Fraud prevention','KYC','AML','Payments'],
+    posted:'3 weeks ago 🔥'
+  },
+  {
+    id:'d1_11', day:1,
+    title:'Senior PM – Cards & Payments India',
+    company:'Adyen',
+    type:'fintech', loc:'blr',
+    match:'h', src:'Company ATS',
+    link:'https://careers.adyen.com/vacancies/6571256-senior-product-manager',
+    why:'India card payments (Visa/MC/Rupay), merchant success, roadmap leadership. Your Cashfree domain knowledge is a direct advantage.',
+    skills:['Card payments','UPI','Rupay','Merchant success','Cross-functional'],
+    posted:'Active – office-first Bengaluru'
+  },
+  {
+    id:'d1_12', day:1,
+    title:'Senior PM – Pricing & Billing Fintech (Remote)',
+    company:'Remote.com',
+    type:'fintech', loc:'remote',
+    match:'m', src:'Greenhouse',
+    link:'https://job-boards.greenhouse.io/remotecom/jobs/6484673003',
+    why:'Billing + pricing SaaS in a fintech context. Global B2B product. Good fit for SaaS + fintech crossover experience.',
+    skills:['Billing','Pricing','B2B SaaS','Fintech','Global product'],
+    posted:'Active'
+  },
+  {
+    id:'d1_13', day:1,
+    title:'Senior PM – Platform/Design (India Remote)',
+    company:'JumpCloud',
+    type:'saas', loc:'remote',
+    match:'m', src:'Lever',
+    link:'https://jobs.lever.co/jumpcloud/81dbca83-2984-46f5-8d39-9c1dd83b9150',
+    why:'B2B SaaS platform PM for IT admins. Your multi-tenant SaaS work at Retisio is a fit. Fully remote from any Indian city.',
+    skills:['B2B SaaS','Platform','IAM','Workflow automation','Remote'],
+    posted:'~Aug 2025 – still open'
+  },
+  {
+    id:'d1_14', day:1,
+    title:'PM – AI Governance (Enterprise)',
+    company:'Glean',
+    type:'saas', loc:'blr',
+    match:'h', src:'Greenhouse',
+    link:'https://boards.greenhouse.io/gleanwork/jobs/4491493005',
+    why:'AI risk, observability, enterprise security. Your Cashfree AI risk intelligence platform + IBM risk dashboard work is a textbook match.',
+    skills:['AI governance','Enterprise SaaS','Risk','Observability','Security'],
+    posted:'Active – Bengaluru'
+  },
+  {
+    id:'d1_15', day:1,
+    title:'Senior PM – Locus (Logistics TMS)',
+    company:'Locus.sh',
+    type:'saas', loc:'blr',
+    match:'h', src:'Company ATS',
+    link:'https://locus.freshteam.com/jobs',
+    why:'Route optimisation, supply chain TMS. Direct overlap with Paramount Software role. Bengaluru onsite. Search "Senior Product Manager" on page.',
+    skills:['Logistics','Route optimisation','Supply chain','TMS','APIs'],
+    posted:'Active – Bengaluru'
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────
+let state = {}; // {jobId: {status, note}}
+
+function loadState() {
+  try { state = JSON.parse(localStorage.getItem('spm_state') || '{}'); } catch(e){ state={}; }
+}
+function saveState() {
+  try { localStorage.setItem('spm_state', JSON.stringify(state)); } catch(e){}
+}
+function getS(id) { return (state[id]||{}).status || 'To Apply'; }
+function getN(id) { return (state[id]||{}).note || ''; }
+function setS(id, v) { state[id] = {...(state[id]||{}), status: v}; saveState(); refresh(); }
+function setN(id, v) { state[id] = {...(state[id]||{}), note: v}; saveState(); }
+
+// ── DATE LOGIC ───────────────────────────────────────────
+function today() {
+  const d = new Date(); d.setHours(0,0,0,0); return d;
+}
+function currentDay() {
+  const diff = Math.floor((today()-START_DATE)/(1000*60*60*24));
+  return Math.min(Math.max(diff+1, 1), TOTAL_DAYS);
+}
+function daysLeft() {
+  const endDate = new Date(START_DATE); endDate.setDate(endDate.getDate()+TOTAL_DAYS-1);
+  const diff = Math.ceil((endDate - today()) / (1000*60*60*24));
+  return Math.max(0, diff);
+}
+function fmt(d) { return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+
+// ── RENDER HEADER ────────────────────────────────────────
+function renderHeader() {
+  const endDate = new Date(START_DATE); endDate.setDate(endDate.getDate()+TOTAL_DAYS-1);
+  document.getElementById('start-date-lbl').textContent = fmt(START_DATE);
+  document.getElementById('end-date-lbl').textContent = fmt(endDate);
+
+  const cd = currentDay();
+  const dl = daysLeft();
+  document.getElementById('days-left').textContent = dl;
+  document.getElementById('current-day').textContent = cd;
+  document.getElementById('today-day-num').textContent = cd;
+
+  const pct = Math.round((cd/TOTAL_DAYS)*100);
+  document.getElementById('prog-pct').textContent = pct+'%';
+  document.getElementById('prog-bar').style.width = pct+'%';
+
+  // Day dots
+  const dotsEl = document.getElementById('day-dots');
+  dotsEl.innerHTML = '';
+  for(let i=1;i<=TOTAL_DAYS;i++){
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.textContent = i;
+    const dayJobs = JOBS.filter(j=>j.day===i);
+    const applied = dayJobs.filter(j=>['Applied','Interviewing','Offer'].includes(getS(j.id))).length;
+    if(i===cd) dot.classList.add('active');
+    else if(i<cd && dayJobs.length>0 && applied===dayJobs.length) dot.classList.add('done');
+    else if(i<cd) dot.style.opacity='0.5';
+    dot.title = `Day ${i}${dayJobs.length?` – ${dayJobs.length} jobs`:''}`;
+    dotsEl.appendChild(dot);
+  }
+}
+
+// ── STATS ────────────────────────────────────────────────
+function renderStats() {
+  let total=0,applied=0,inter=0,offer=0,skip=0,todo=0;
+  JOBS.forEach(j=>{
+    total++;
+    const s=getS(j.id);
+    if(s==='Applied') applied++;
+    else if(s==='Interviewing') inter++;
+    else if(s==='Offer') offer++;
+    else if(s==='Skipped') skip++;
+    else todo++;
+  });
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-applied').textContent=applied;
+  document.getElementById('s-int').textContent=inter;
+  document.getElementById('s-offer').textContent=offer;
+  document.getElementById('s-skip').textContent=skip;
+
+  document.getElementById('cnt-all').textContent=total;
+  document.getElementById('cnt-todo').textContent=todo;
+  document.getElementById('cnt-applied').textContent=applied;
+  document.getElementById('cnt-int').textContent=inter;
+  document.getElementById('cnt-offer').textContent=offer;
+  document.getElementById('cnt-skip').textContent=skip;
+}
+
+// ── TAB STATE ─────────────────────────────────────────────
+let activeTab = 'all';
+function switchTab(t, btn) {
+  activeTab = t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderJobs();
+}
+
+// ── RENDER JOBS ──────────────────────────────────────────
+function renderJobs() {
+  const container = document.getElementById('job-list');
+  let filtered = JOBS;
+  if(activeTab==='todo') filtered=JOBS.filter(j=>getS(j.id)==='To Apply');
+  else if(activeTab==='all') filtered=JOBS;
+  else filtered=JOBS.filter(j=>getS(j.id)===activeTab);
+
+  if(filtered.length===0){
+    container.innerHTML='<div class="empty">No jobs in this category yet.</div>';
+    return;
+  }
+
+  // Group by day
+  const days = [...new Set(filtered.map(j=>j.day))].sort((a,b)=>a-b);
+  container.innerHTML = days.map(day=>{
+    const dayJobs = filtered.filter(j=>j.day===day);
+    const dayDate = new Date(START_DATE); dayDate.setDate(dayDate.getDate()+day-1);
+    const cd = currentDay();
+    const label = day===cd?'Today':'Day '+day;
+    return `
+      <div class="day-header">
+        <h2>${label} — ${fmt(dayDate)}</h2>
+        <span>${dayJobs.length} jobs</span>
+      </div>
+      ${dayJobs.map((j,i)=>renderCard(j,i+1)).join('')}
+    `;
+  }).join('');
+}
+
+function renderCard(j, num) {
+  const s = getS(j.id);
+  const n = getN(j.id);
+  const locPill = j.loc==='remote'
+    ? '<span class="pill pill-remote">🌐 Remote</span>'
+    : '<span class="pill pill-blr">📍 Bengaluru</span>';
+  const matchPill = j.match==='h'
+    ? '<span class="pill pill-match-h">★ Strong match</span>'
+    : '<span class="pill pill-match-m">◆ Good match</span>';
+  const freshPill = j.posted.includes('🔥')
+    ? `<span class="pill pill-fresh">${j.posted}</span>`
+    : `<span class="pill pill-src">${j.posted}</span>`;
+  const srcPill = `<span class="pill pill-src">${j.src}</span>`;
+
+  const STATUS_OPTS = ['To Apply','Applied','Interviewing','Offer','Skipped'];
+  const selectOpts = STATUS_OPTS.map(o=>`<option${o===s?' selected':''}>${o}</option>`).join('');
+
+  return `<div class="job-card" id="card-${j.id}">
+    <div class="job-num">${num}</div>
+    <div class="job-main">
+      <div class="job-title">${j.title}</div>
+      <div class="job-co">${j.company}</div>
+      <div class="job-meta">${matchPill}${locPill}${srcPill}${freshPill}</div>
+      <div class="job-why">${j.why}</div>
+      <div class="job-skills">${j.skills.map(sk=>`<span class="skill">${sk}</span>`).join('')}</div>
+    </div>
+    <div class="job-actions">
+      <a class="btn-apply" href="${j.link}" target="_blank">Apply ↗</a>
+      <select class="status" onchange="setS('${j.id}',this.value)">${selectOpts}</select>
+      <div class="note-wrap">
+        <input class="note-inp" type="text" placeholder="Notes (date, recruiter...)" value="${n}" oninput="setN('${j.id}',this.value)">
+      </div>
+      <div class="date-posted">Source: ${j.src}</div>
+    </div>
+  </div>`;
+}
+
+// ── MAIN REFRESH ─────────────────────────────────────────
+function refresh() {
+  renderHeader();
+  renderStats();
+  renderJobs();
+}
+
+// ── INIT ─────────────────────────────────────────────────
+loadState();
+refresh();
+</script>
+</body>
+</html>
